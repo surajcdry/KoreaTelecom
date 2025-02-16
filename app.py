@@ -1,13 +1,18 @@
 from bs4 import BeautifulSoup
 from deep_translator import GoogleTranslator
 import requests
+import csv
 
 def fetcher(url):
     """Fetch KT Telecom page content and translate from Korean to English"""
 
-    # Fetch the webpage
-    response = requests.get(url)
-    response.raise_for_status()
+    # Fetch the webpage, stop if error
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except:
+        print("An error occurred while fetching the HTML content")
+        return None
     
     # Parse HTML
     soup = BeautifulSoup(response.text, 'lxml')
@@ -64,11 +69,11 @@ def parse_plan(soup):
         # Add plan to dictionary
         all_plans[title] = plan_details
 
-    #     data = row.find('p', class_='plan-data').text.strip()
     return all_plans
         
 
-    # translated_content = GoogleTranslator(source='auto', target='en').translate(target_div.text)
+    # translate template for "text" var is 
+        # translated_content = GoogleTranslator(source='auto', target='en').translate(text) 
 
 def print_plans(plans):
     """Print plans in a readable format"""
@@ -85,15 +90,43 @@ def print_plans(plans):
         print("    Benefits:")
         for benefit in details['benefits']:
             print(f"     • {benefit}")
+
+        print("")
+
+def save_to_csv(plans):
+    """Save plans to a CSV file with 4 columns: plan name, price, features, benefits"""
+    with open('plans.csv', 'w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
         
-        print("\n")
+        # Write header with 4 columns
+        writer.writerow(['Plan Name', 'Price', 'Features', 'Benefits'])
+        
+        for plan_name, details in plans.items():
+            # Combine all details of features into one string
+            features = []
+            for feature in details['features']:
+                features.append(f"{feature['name']}: {feature['value']}")
+            features_str = ' | '.join(features)
+            
+            # Combine all details of benefit into one string
+            benefits_str = ' | '.join(details['benefits'])
+            
+            # add row with details in 4 columns
+            writer.writerow([
+                plan_name,
+                f"₩{details['price']}",
+                features_str,
+                benefits_str
+            ])
 
 def main():
     url = "https://shop.kt.com/direct/directUsim.do"
     soup = fetcher(url)
     if soup:
         plan_list = parse_plan(soup)
-        print_plans(plan_list) 
+        print_plans(plan_list)
+        save_to_csv(plan_list)
+        print("\nPlans have been saved to plans.csv")
     else:
         print("No plans found")
 
