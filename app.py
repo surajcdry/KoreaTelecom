@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from deep_translator import GoogleTranslator
 import requests
 import csv
+import datetime
 
 def fetcher(url):
     """Fetch KT Telecom page content and translate from Korean to English"""
@@ -119,16 +120,29 @@ def save_to_csv(plans):
                 benefits_str
             ])
 
+def save_log(success, message):
+    """Save execution log with timestamp"""
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open('crawler.log', 'a', encoding='utf-8') as file:
+        log_entry = f"[{timestamp}] {'SUCCESS' if success else 'FAILED'}: {message}\n"
+        file.write(log_entry)
+
 def main():
     url = "https://shop.kt.com/direct/directUsim.do"
-    soup = fetcher(url)
-    if soup:
-        plan_list = parse_plan(soup)
-        print_plans(plan_list)
-        save_to_csv(plan_list)
-        print("\nPlans have been saved to plans.csv")
-    else:
-        print("No plans found")
+    try:
+        soup = fetcher(url)
+        if soup:
+            plan_list = parse_plan(soup)
+            print_plans(plan_list)
+            save_to_csv(plan_list)
+            save_log(True, f"Successfully scraped {len(plan_list)} plans")
+            print("\nPlans have been saved to plans.csv")
+        else:
+            save_log(False, "Failed to fetch HTML content")
+            print("No plans found")
+    except Exception as e:
+        save_log(False, f"Error occurred: {str(e)}")
+        raise e
 
 if __name__ == "__main__":
     main()
