@@ -3,6 +3,7 @@ from deep_translator import GoogleTranslator
 import requests
 import csv
 import datetime
+import pytz # to convert time from Universal to EST
 
 def fetcher(url):
     """Fetch KT Telecom page content and translate from Korean to English"""
@@ -122,7 +123,8 @@ def save_to_csv(plans):
 
 def save_log(success, message):
     """Save execution log with timestamp"""
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    est = pytz.timezone('America/New_York') # timezone change
+    timestamp = datetime.datetime.now(est).strftime("%Y-%m-%d %H:%M:%S %Z")
     with open('crawler.log', 'a', encoding='utf-8') as file:
         log_entry = f"[{timestamp}] {'SUCCESS' if success else 'FAILED'}: {message}\n"
         file.write(log_entry)
