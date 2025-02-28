@@ -73,7 +73,6 @@ def parse_plan(soup):
 
     return all_plans
         
-
     # translate template for "text" var is 
         # translated_content = GoogleTranslator(source='auto', target='en').translate(text) 
 
@@ -101,7 +100,11 @@ def save_to_csv(plans):
         writer = csv.writer(file)
         
         # Write header with 4 columns
-        writer.writerow(['Plan Name', 'Price', 'Features', 'Benefits'])
+        writer.writerow(['Time Fetched', 'Plan Name', 'Price', 'Features', 'Benefits'])
+
+        # write time fetched row
+        est = pytz.timezone('America/New_York') # timezone change
+        timestamp = datetime.datetime.now(est).strftime("%Y-%m-%d %H:%M:%S %Z")
         
         for plan_name, details in plans.items():
             # Combine all details of features into one string
@@ -115,6 +118,7 @@ def save_to_csv(plans):
             
             # add row with details in 4 columns
             writer.writerow([
+                timestamp,
                 plan_name,
                 f"₩{details['price']}",
                 features_str,
